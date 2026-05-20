@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Антиплагіат система</title>
+
+<style>
+body {
+    font-family: Arial;
+    max-width: 900px;
+    margin: 40px auto;
+    background: #f5f5f5;
+}
+
+/* базова картка */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+/* карточка історії */
+.match {
+    padding: 14px;
+    margin: 10px 0;
+    border-radius: 10px;
+    transition: 0.2s;
+    color: #1a1a1a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* hover ефект */
+.match:hover {
+    transform: scale(1.01);
+}
+
+/* рівні плагіату */
+.low {
+    background: #d9f8d9;
+    border-left: 6px solid #2ecc71;
+}
+
+.medium {
+    background: #fff4cc;
+    border-left: 6px solid #f1c40f;
+}
+
+.high {
+    background: #ffd6d6;
+    border-left: 6px solid #e74c3c;
+}
+
+/* текст */
+.match small {
+    opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>Система перевірки плагіату</h1>
+
+    <input type="file" id="fileInput">
+    <button onclick="checkPlagiarism()">Перевірити</button>
+</div>
+
+<div class="card" id="result"></div>
+
+<div class="card">
+    <h2>Історія перевірок</h2>
+    <button onclick="loadHistory()">Оновити</button>
+    <div id="history"></div>
+</div>
+
+<script>
+
+async function checkPlagiarism() {
+
+    const fileInput = document.getElementById("fileInput")
+
+    const formData = new FormData()
+    formData.append("file", fileInput.files[0])
+
+    const response = await fetch("/documents/check-plagiarism", {
+        method: "POST",
+        body: formData
+    })
+
+    const data = await response.json()
+
+    document.getElementById("result").innerHTML = `
+        <h2>Результат</h2>
+        <p><b>Файл:</b> ${data.filename}</p>
+        <p><b>Плагіат:</b> ${Math.round(data.max_similarity * 100)}%</p>
+        <p><b>Рівень:</b> ${data.level}</p>
+    `
+
+    loadHistory()
+}
+
+async function loadHistory() {
+
+    const res = await fetch("/documents/history")
+    const data = await res.json()
+
+    document.getElementById("history").innerHTML = data.map(d => {
+
+        let levelClass = ""
+        if (d.level === "low") levelClass = "low"
+        if (d.level === "medium") levelClass = "medium"
+        if (d.level === "high") levelClass = "high"
+
+        return `
+            <div class="match ${levelClass}">
+                <b>${d.filename}</b><br>
+                Плагіат: ${Math.round(d.max_similarity * 100)}%<br>
+                Рівень: ${d.level}
+
+                <div style="margin-top:10px; display:flex; gap:10px;">
+                    
+                    <a href="/documents/report/${d.id}" target="_blank">
+                        <button>
+                            Переглянути PDF
+                        </button>
+                    </a>
+
+                </div>
+            </div>
+        `
+    }).join("")
+}
+
+loadHistory()
+
+</script>
+
+</body>
+</html>
