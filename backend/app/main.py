@@ -4,7 +4,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 
 from backend.app.api.v1.documents import router as documents_router
-
 from backend.app.db.session import engine
 from backend.app.models.document import Base
 
@@ -44,13 +43,10 @@ app.include_router(documents_router)
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
 
-    print("TYPE:", type(templates))
-    print("SEARCH PATH:", templates.env.loader.searchpath)
-
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
+        request=request,
+        name="index.html",
+        context={
             "debug": "test"
         }
     )
